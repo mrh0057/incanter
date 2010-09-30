@@ -2980,6 +2980,29 @@ usual metric of Euclidean geometry is replaced by a new metric in which the dist
 ;;TODO: factor out duplicaiton between cosine similarity and tanimoto.
 ;;perhaps switch to matrix representation?
 
+(defn- numerator-cos [vec1 vec2]
+  (loop [vec1 vec1
+         vec2 vec2
+         numer 0]
+    (if (empty? vec1)
+      numer
+      (recur (rest vec1) (rest vec2) (+ numer (* (first vec1) (first vec2)))))))
+
+(defn- squared [a]
+  (* a a))
+
+(defn- denumerator-cos [vec1 vec2]
+  (loop [vec1 vec1
+         vec2 vec2
+         vec1-sum 0
+         vec2-sum 0]
+    (if (empty? vec1)
+      (* (Math/sqrt vec1-sum) (Math/sqrt vec2-sum))
+      (recur (rest vec1)
+             (rest vec2)
+             (+ vec1-sum (squared (first vec1)))
+             (+ vec2-sum (squared (first vec2)))))))
+
 (defn cosine-similarity
 "
 http://en.wikipedia.org/wiki/Cosine_similarity
@@ -3002,18 +3025,8 @@ Cosine Similarity (d1, d2) = 61 / (8.12403840464) * (8)
                            = 61 / 64.9923072371
                            = 0.938572618717
 "
-[a b]
-(let [counts
-(apply merge-with +
-(map 
- (fn [[x y]]
-   {:dot (* x y)
-    :a (pow x 2)
-    :b (pow y 2)})
- (map vector a b)))]
-(/ (:dot counts)
-   (* (sqrt (:a counts))
-      (sqrt (:a counts))))))
+[vec1 vec2]
+(/ (numerator-cos vec1 vec2) (denumerator-cos vec1 vec2)))
 
 (defn tanimoto-coefficient
 "
